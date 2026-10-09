@@ -5,7 +5,6 @@ import { NewCommentForm } from './NewCommentForm';
 import { Post } from '../types/Post';
 import { client } from '../utils/fetchClient';
 import type { Comment, CommentData } from '../types/Comment';
-import cn from 'classnames';
 
 type PostDetailsProps = {
   post: Post;

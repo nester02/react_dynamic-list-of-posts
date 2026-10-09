@@ -37,22 +37,34 @@ export const App = () => {
 
   useEffect(() => {
     if (selectedUser) {
-      setPostsState(prevState => ({ ...prevState, isLoading: true }));
-      setPostsState(prevState => ({ ...prevState, isError: false }));
+      setPostsState({
+        posts: [],
+        isLoading: true,
+        isError: false,
+      });
+
       client
         .get<Post[]>(`/posts?userId=${selectedUser.id}`)
         .then(data => {
-          setPostsState(prevState => ({ ...prevState, posts: data }));
+          setPostsState({
+            posts: data,
+            isLoading: false,
+            isError: false,
+          });
         })
         .catch(() => {
-          setPostsState(prevState => ({ ...prevState, isError: true }));
-        })
-        .finally(() =>
-          setPostsState(prevState => ({ ...prevState, isLoading: false })),
-        );
+          setPostsState({
+            posts: [],
+            isLoading: false,
+            isError: true,
+          });
+        });
     } else {
-      setPostsState(prevState => ({ ...prevState, posts: [] }));
-      setPostsState(prevState => ({ ...prevState, isError: false }));
+      setPostsState({
+        posts: [],
+        isLoading: false,
+        isError: false,
+      });
     }
   }, [selectedUser]);
 
