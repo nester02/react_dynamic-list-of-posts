@@ -16,11 +16,15 @@ export const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
   const [isCommentsLoading, setIsCommentsLoading] = useState(false);
   const [isCommentsError, setIsCommentsError] = useState(false);
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
+  const [addError, setAddError] = useState(false);
 
   useEffect(() => {
     if (post.id) {
       setIsCommentsLoading(true);
       setIsCommentsError(false);
+      setAddError(false);
+      setDeleteError(false);
       setIsFormVisible(false);
       setComments([]);
       client
@@ -37,19 +41,41 @@ export const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
     }
   }, [post.id]);
 
-  const handleDeleteComment = (commentId: number) => {
+  const handleDeleteComment = async (commentId: number) => {
+    const deletedComment = comments.find(comment => comment.id === commentId);
+
+    setDeleteError(false);
+
+    if (!deletedComment) {
+      return;
+    }
+
     setComments(prevComments =>
       prevComments.filter(comment => comment.id !== commentId),
     );
-    client.delete(`/comments/${commentId}`);
+
+    try {
+      await client.delete(`/comments/${commentId}`);
+    } catch {
+      setComments(prevComments => [...prevComments, deletedComment]);
+      setDeleteError(true);
+    }
   };
 
-  const handleAddComment = (commentData: CommentData) => {
-    return client
-      .post<Comment>('/comments', { ...commentData, postId: post.id })
-      .then(addedComment => {
-        setComments(prevComments => [...prevComments, addedComment]);
+  const handleAddComment = async (commentData: CommentData) => {
+    setAddError(false);
+
+    try {
+      const addedComment = await client.post<Comment>('/comments', {
+        ...commentData,
+        postId: post.id,
       });
+
+      setComments(prevComments => [...prevComments, addedComment]);
+    } catch (error) {
+      setAddError(true);
+      throw error;
+    }
   };
 
   return (
@@ -66,6 +92,18 @@ export const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
         {isCommentsError && (
           <div className="notification is-danger" data-cy="CommentsError">
             Something went wrong
+          </div>
+        )}
+
+        {addError && (
+          <div className="notification is-danger">
+            Something went wrong while adding a comment
+          </div>
+        )}
+
+        {deleteError && (
+          <div className="notification is-danger">
+            Something went wrong while deleting a comment
           </div>
         )}
 
@@ -109,7 +147,7 @@ export const PostDetails: React.FC<PostDetailsProps> = ({ post }) => {
           <button
             data-cy="WriteCommentButton"
             type="button"
-            className={cn('button is-link', { 'is-hidden': isFormVisible })}
+            className="button is-link"
             onClick={() => setIsFormVisible(true)}
           >
             Write a comment

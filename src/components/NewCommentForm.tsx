@@ -37,9 +37,12 @@ export const NewCommentForm: React.FC<NewCommentFormProps> = ({
     }
 
     setIsSubmitting(true);
+
     try {
       await onAddComment({ name, email, body });
       setBody('');
+    } catch {
+      // error notification is shown in PostDetails
     } finally {
       setIsSubmitting(false);
     }

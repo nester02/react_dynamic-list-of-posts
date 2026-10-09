@@ -13,13 +13,23 @@ import type { User } from './types/User';
 import { client } from './utils/fetchClient';
 import { Post } from './types/Post';
 
+type PostsState = {
+  posts: Post[];
+  isLoading: boolean;
+  isError: boolean;
+};
+
 export const App = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
+  const [postsState, setPostsState] = useState<PostsState>({
+    posts: [],
+    isLoading: false,
+    isError: false,
+  });
+
+  const { posts, isLoading, isError } = postsState;
 
   useEffect(() => {
     client.get<User[]>('/users').then(data => setUsers(data));
@@ -27,20 +37,22 @@ export const App = () => {
 
   useEffect(() => {
     if (selectedUser) {
-      setIsLoading(true);
-      setIsError(false);
+      setPostsState(prevState => ({ ...prevState, isLoading: true }));
+      setPostsState(prevState => ({ ...prevState, isError: false }));
       client
         .get<Post[]>(`/posts?userId=${selectedUser.id}`)
         .then(data => {
-          setPosts(data);
+          setPostsState(prevState => ({ ...prevState, posts: data }));
         })
         .catch(() => {
-          setIsError(true);
+          setPostsState(prevState => ({ ...prevState, isError: true }));
         })
-        .finally(() => setIsLoading(false));
+        .finally(() =>
+          setPostsState(prevState => ({ ...prevState, isLoading: false })),
+        );
     } else {
-      setPosts([]);
-      setIsError(false);
+      setPostsState(prevState => ({ ...prevState, posts: [] }));
+      setPostsState(prevState => ({ ...prevState, isError: false }));
     }
   }, [selectedUser]);
 
